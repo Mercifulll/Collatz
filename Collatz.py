@@ -1,5 +1,7 @@
 import threading
 
+mutex = threading.Lock()
+
 # Функція для обчислення кількості кроків до виродження в 1 за гіпотезою Коллатца
 def collatz_steps(n):
     steps = 0
@@ -12,12 +14,10 @@ def collatz_steps(n):
     return steps
 
 def calculate_collatz_range(numbers, results):
-    local_results = []  # Локальний список для зберігання результатів поточного потоку
     for num in numbers:
         steps = collatz_steps(num)
-        local_results.append(steps)
-    # Додати результати поточного потоку до загального списку
-    results.extend(local_results)
+        with mutex:
+            results.append(steps)
 
 if __name__ == "__main__":
     N = int(input("Введіть натуральне число: "))
@@ -26,17 +26,12 @@ if __name__ == "__main__":
     numbers = list(range(1, N + 1))
     results = []
 
-    # Розділити числа між потоками
-    chunk_size = len(numbers) // num_threads
-    threads = []
-
     # Створити та запустити потоки для обчислень
-    for i in range(num_threads):
-        start_idx = i * chunk_size
-        end_idx = (i + 1) * chunk_size if i != num_threads - 1 else len(numbers)
-        thread = threading.Thread(target=calculate_collatz_range, args=(numbers[start_idx:end_idx], results))
+    threads = [threading.Thread(target=calculate_collatz_range, args=(numbers, results)) for _ in range(num_threads)]
+
+    # Запустити потоки
+    for thread in threads:
         thread.start()
-        threads.append(thread)
 
     # Завершити всі потоки
     for thread in threads:
