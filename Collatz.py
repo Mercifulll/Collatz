@@ -1,8 +1,5 @@
 import threading
 
-# Глобальний мютекс для синхронізації доступу до спільних ресурсів
-mutex = threading.Lock()
-
 # Функція для обчислення кількості кроків до виродження в 1 за гіпотезою Коллатца
 def collatz_steps(n):
     steps = 0
@@ -15,10 +12,12 @@ def collatz_steps(n):
     return steps
 
 def calculate_collatz_range(numbers, results):
+    local_results = []  # Локальний список для зберігання результатів поточного потоку
     for num in numbers:
         steps = collatz_steps(num)
-        with mutex:
-            results.append(steps)
+        local_results.append(steps)
+    # Додати результати поточного потоку до загального списку
+    results.extend(local_results)
 
 if __name__ == "__main__":
     N = int(input("Введіть натуральне число: "))
